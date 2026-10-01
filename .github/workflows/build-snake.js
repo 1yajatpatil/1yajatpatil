@@ -49,73 +49,42 @@ function buildGrid(cells) {
   return { byCoord, cols: maxCol + 1, rows: 7 };
 }
 
-// Deterministic fallback: down column 0, up column 1, ... guaranteed to
-// visit every cell, but looks like a lawnmower, not a snake.
-function buildBoustrophedonPath(grid) {
-  const path = [];
-  for (let col = 0; col < grid.cols; col++) {
-    const down = col % 2 === 0;
-    for (let r = 0; r < grid.rows; r++) {
-      const row = down ? r : grid.rows - 1 - r;
-      const cell = grid.byCoord.get(`${col},${row}`);
-      if (cell) path.push(cell);
-    }
-  }
-  return path;
-}
-
-// Organic path: a randomized Hamiltonian walk using Warnsdorff's heuristic
-// (always step onto the neighbor with the fewest onward options, so the
-// snake doesn't wall itself in) with backtracking, so it wanders the board
-// like an actual snake game instead of sweeping it in a fixed sweep.
-function buildWanderingPath(grid) {
-  const key = (col, row) => `${col},${row}`;
-  const neighborsOf = (cell) =>
-    [
-      [cell.col + 1, cell.row],
-      [cell.col - 1, cell.row],
-      [cell.col, cell.row + 1],
-      [cell.col, cell.row - 1],
-    ]
-      .map(([col, row]) => grid.byCoord.get(key(col, row)))
-      .filter(Boolean);
-
-  const total = grid.byCoord.size;
-  const visited = new Set();
-  const path = [];
-  let budget = 400000; // safety cap so a pathological grid can't hang the build
-
-  function dfs(current) {
-    if (budget-- <= 0) return false;
-    path.push(current);
-    visited.add(key(current.col, current.row));
-    if (path.length === total) return true;
-
-    const candidates = neighborsOf(current)
-      .filter((n) => !visited.has(key(n.col, n.row)))
-      .map((n) => ({
-        n,
-        // Warnsdorff score: how many unvisited exits this neighbor has left.
-        score: neighborsOf(n).filter((nn) => !visited.has(key(nn.col, nn.row))).length,
-        r: Math.random(),
-      }))
-      .sort((a, b) => a.score - b.score || a.r - b.r);
-
-    for (const { n } of candidates) {
-      if (dfs(n)) return true;
-    }
-
-    path.pop();
-    visited.delete(key(current.col, current.row));
-    return false;
-  }
-
-  const start = grid.byCoord.get(key(0, 0)) || [...grid.byCoord.values()][0];
-  return dfs(start) ? path : null;
-}
-
+// A randomized backtracking search for a truly organic path turned out
+// unreliable on a grid this thin (53 columns by only 7 rows) — it would
+// sometimes box itself in and burn seconds of backtracking with no
+// guaranteed result, and when it did finish, Warnsdorff's heuristic still
+// leaned hard into either long vertical or long horizontal runs because
+// that's what the grid's shape rewards.
+//
+// Instead: weave in small fixed-size blocks. Within each block the snake
+// does a tight boustrophedon across every row (so it's constantly turning,
+// not a single sweep), and successive blocks alternate which row they start
+// on so consecutive blocks connect smoothly. The overall effect reads as
+// genuine weaving rather than one long mechanical sweep, and it's a plain
+// deterministic construction — always completes, instantly, every run.
 function buildPath(grid) {
-  return buildWanderingPath(grid) || buildBoustrophedonPath(grid);
+  const BLOCK_WIDTH = 7;
+  const path = [];
+  let ascending = true;
+
+  for (let blockStart = 0; blockStart < grid.cols; blockStart += BLOCK_WIDTH) {
+    const blockEnd = Math.min(blockStart + BLOCK_WIDTH, grid.cols); // exclusive
+    const rowOrder = [];
+    for (let r = 0; r < grid.rows; r++) rowOrder.push(ascending ? r : grid.rows - 1 - r);
+
+    rowOrder.forEach((row, idx) => {
+      const leftToRight = idx % 2 === 0;
+      for (let i = 0; i < blockEnd - blockStart; i++) {
+        const col = leftToRight ? blockStart + i : blockEnd - 1 - i;
+        const cell = grid.byCoord.get(`${col},${row}`);
+        if (cell) path.push(cell);
+      }
+    });
+
+    ascending = !ascending; // flip so the next block picks up on the same row
+  }
+
+  return path;
 }
 
 function buildSnakeSchedule(path) {
