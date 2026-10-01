@@ -26,24 +26,7 @@ jobs:
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
 
       - name: speed up snake animation
-        run: |
-          python3 - <<'PY'
-          import re, glob
-
-          FACTOR = 0.4  # lower = faster; scales every animation duration uniformly
-
-          for path in glob.glob("dist/*.svg"):
-              with open(path) as f:
-                  content = f.read()
-
-              def scale(m):
-                  return f"{max(1, int(int(m.group(1)) * FACTOR))}ms"
-
-              content = re.sub(r"(\d+)ms", scale, content)
-
-              with open(path, "w") as f:
-                  f.write(content)
-          PY
+        run: python3 .github/workflows/speed_up_snake.py
 
       - name: push snake svg to output branch
         uses: crazy-max/ghaction-github-pages@v4
