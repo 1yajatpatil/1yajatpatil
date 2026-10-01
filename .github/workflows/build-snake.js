@@ -93,7 +93,7 @@ function buildGrid(cells) {
 // genuine weaving rather than one long mechanical sweep, and it's a plain
 // deterministic construction — always completes, instantly, every run.
 function buildPath(grid) {
-  const BLOCK_WIDTH = 7;
+  const BLOCK_WIDTH = 18; // wider blocks = longer straight runs, fewer turns
   const path = [];
   let ascending = true;
 

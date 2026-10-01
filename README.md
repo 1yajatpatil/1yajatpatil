@@ -6,9 +6,9 @@ Computer Science undergraduate at Walchand College of Engineering.
 
 <!-- Auto-regenerating snake: GitHub Action rebuilds this on a schedule from the live contribution graph -->
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake-dark.svg" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg" />
-  <img alt="snake eating contribution graph" src="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake-dark.svg?v=1" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg?v=1" />
+  <img alt="snake eating contribution graph" src="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg?v=1" width="100%" />
 </picture>
 
 $\color{#9D00FF}{\pmb{\textbf{About Me}}}$
