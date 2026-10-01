@@ -12,8 +12,38 @@ const PITCH = 16; // px between cell centers
 const CELL = 12; // px cell size
 const START_LENGTH = 4; // snake length before eating anything
 const STEP_MS = 55; // time per grid step; lower = faster
-const HOLD_FRACTION = 0.03; // pause at the end of a lap before it resets
+const HOLD_FRACTION = 0.25; // share of the loop spent on the end-of-lap "HIRE ME" reveal
 const SNAKE_COLOR = "#9D00FF";
+const MESSAGE = "HIRE ME";
+
+// Classic 5x7 dot-matrix glyphs. 1 = lit pixel, in reading order top to bottom.
+const FONT = {
+  H: ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+  I: ["111", "010", "010", "010", "010", "010", "111"],
+  R: ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+  E: ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+  M: ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+  " ": ["000", "000", "000", "000", "000", "000", "000"],
+};
+
+// Lit pixel positions for MESSAGE, relative to its own left edge (column 0).
+function buildMessagePixels() {
+  const pixels = [];
+  let col = 0;
+  let width = 0;
+  for (const ch of MESSAGE) {
+    const glyph = FONT[ch];
+    const glyphWidth = glyph[0].length;
+    glyph.forEach((rowStr, row) => {
+      [...rowStr].forEach((bit, dx) => {
+        if (bit === "1") pixels.push({ col: col + dx, row });
+      });
+    });
+    col += glyphWidth + 1; // 1-column gap between characters
+    width = col - 1;
+  }
+  return { pixels, width };
+}
 
 const PALETTES = {
   light: { bg: "#ebedf0", levels: ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"] },
@@ -109,8 +139,18 @@ function fmt(n) {
 function renderSvg(path, birthStep, palette) {
   const totalSteps = path.length;
   const totalMs = Math.round(totalSteps * STEP_MS * (1 / (1 - HOLD_FRACTION)));
-  const width = PITCH * Math.max(...path.map((c) => c.col)) + PITCH + 4;
+  const gridCols = Math.max(...path.map((c) => c.col)) + 1;
+  const width = PITCH * gridCols + 4;
   const height = PITCH * 7 + 4;
+
+  // End-of-lap timeline: crawl (0 -> mainEnd), snake fades out, "HIRE ME"
+  // wipes on column by column, holds, fades out, then the loop wraps to 0%.
+  const mainEnd = 100 * (1 - HOLD_FRACTION);
+  const holdSpan = 100 - mainEnd;
+  const snakeFadeEnd = mainEnd + holdSpan * 0.12;
+  const revealEnd = snakeFadeEnd + holdSpan * 0.52;
+  const messageHoldEnd = revealEnd + holdSpan * 0.2;
+  const messageFadeEnd = 100;
 
   let css = "";
   let rects = "";
@@ -146,9 +186,10 @@ function renderSvg(path, birthStep, palette) {
       const y = cell.row * PITCH + 2;
       stops.push({ p: fmt(pct(t, totalSteps)), x, y, visible });
     }
-    // hold at final position through the pause, then the loop wraps to 0%
+    // hold at the final position, then fade out to make room for the message
     const last = stops[stops.length - 1];
-    stops.push({ p: fmt(100 * (1 - HOLD_FRACTION)), x: last.x, y: last.y, visible: last.visible });
+    stops.push({ p: fmt(mainEnd), x: last.x, y: last.y, visible: last.visible });
+    stops.push({ p: fmt(snakeFadeEnd), x: last.x, y: last.y, visible: 0 });
 
     let kf = "";
     stops.forEach(({ p, x, y, visible }) => {
@@ -159,7 +200,23 @@ function renderSvg(path, birthStep, palette) {
     segs += `<rect width="${CELL}" height="${CELL}" rx="3" fill="${SNAKE_COLOR}" class="${cls}"/>`;
   }
 
-  return `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><desc>Custom growing snake, generated from the real contribution graph</desc><style>${css}</style>${rects}${segs}</svg>`;
+  // "HIRE ME" reveal: wipes in column by column once the snake has finished
+  // and faded, holds, then fades out right before the loop wraps to 0%.
+  const { pixels: msgPixels, width: msgWidth } = buildMessagePixels();
+  const msgOffset = Math.max(0, Math.floor((gridCols - msgWidth) / 2));
+  let message = "";
+  msgPixels.forEach(({ col, row }, i) => {
+    const x = (msgOffset + col) * PITCH + 2;
+    const y = row * PITCH + 2;
+    const revealAt = fmt(revealEnd - ((msgWidth - col) / msgWidth) * (revealEnd - snakeFadeEnd));
+    const litAt = fmt(Math.min(revealEnd, revealAt + 0.3));
+    const cls = `m${i}`;
+    css += `@keyframes ${cls}{0%,${revealAt}%{opacity:0}${litAt}%,${fmt(messageHoldEnd)}%{opacity:1}${fmt(messageFadeEnd)}%{opacity:0}}`;
+    css += `.${cls}{animation:${cls} ${totalMs}ms linear infinite;fill:${SNAKE_COLOR};opacity:0}`;
+    message += `<rect x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2" class="${cls}"/>`;
+  });
+
+  return `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><desc>Custom growing snake, generated from the real contribution graph, spelling out HIRE ME at the end of each lap</desc><style>${css}</style>${rects}${segs}${message}</svg>`;
 }
 
 async function main() {
