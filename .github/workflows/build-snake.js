@@ -11,7 +11,7 @@ const USERNAME = "1yajatpatil";
 const PITCH = 16; // px between cell centers
 const CELL = 12; // px cell size
 const START_LENGTH = 4; // snake length before eating anything
-const STEP_MS = 35; // time per grid step; lower = faster
+const STEP_MS = 55; // time per grid step; lower = faster
 const HOLD_FRACTION = 0.03; // pause at the end of a lap before it resets
 const SNAKE_COLOR = "#9D00FF";
 
@@ -49,9 +49,9 @@ function buildGrid(cells) {
   return { byCoord, cols: maxCol + 1, rows: 7 };
 }
 
-// Boustrophedon path: down column 0, up column 1, down column 2, ... so the
-// snake always moves to an adjacent cell, exactly like a real snake game.
-function buildPath(grid) {
+// Deterministic fallback: down column 0, up column 1, ... guaranteed to
+// visit every cell, but looks like a lawnmower, not a snake.
+function buildBoustrophedonPath(grid) {
   const path = [];
   for (let col = 0; col < grid.cols; col++) {
     const down = col % 2 === 0;
@@ -62,6 +62,60 @@ function buildPath(grid) {
     }
   }
   return path;
+}
+
+// Organic path: a randomized Hamiltonian walk using Warnsdorff's heuristic
+// (always step onto the neighbor with the fewest onward options, so the
+// snake doesn't wall itself in) with backtracking, so it wanders the board
+// like an actual snake game instead of sweeping it in a fixed sweep.
+function buildWanderingPath(grid) {
+  const key = (col, row) => `${col},${row}`;
+  const neighborsOf = (cell) =>
+    [
+      [cell.col + 1, cell.row],
+      [cell.col - 1, cell.row],
+      [cell.col, cell.row + 1],
+      [cell.col, cell.row - 1],
+    ]
+      .map(([col, row]) => grid.byCoord.get(key(col, row)))
+      .filter(Boolean);
+
+  const total = grid.byCoord.size;
+  const visited = new Set();
+  const path = [];
+  let budget = 400000; // safety cap so a pathological grid can't hang the build
+
+  function dfs(current) {
+    if (budget-- <= 0) return false;
+    path.push(current);
+    visited.add(key(current.col, current.row));
+    if (path.length === total) return true;
+
+    const candidates = neighborsOf(current)
+      .filter((n) => !visited.has(key(n.col, n.row)))
+      .map((n) => ({
+        n,
+        // Warnsdorff score: how many unvisited exits this neighbor has left.
+        score: neighborsOf(n).filter((nn) => !visited.has(key(nn.col, nn.row))).length,
+        r: Math.random(),
+      }))
+      .sort((a, b) => a.score - b.score || a.r - b.r);
+
+    for (const { n } of candidates) {
+      if (dfs(n)) return true;
+    }
+
+    path.pop();
+    visited.delete(key(current.col, current.row));
+    return false;
+  }
+
+  const start = grid.byCoord.get(key(0, 0)) || [...grid.byCoord.values()][0];
+  return dfs(start) ? path : null;
+}
+
+function buildPath(grid) {
+  return buildWanderingPath(grid) || buildBoustrophedonPath(grid);
 }
 
 function buildSnakeSchedule(path) {
