@@ -26,7 +26,19 @@ jobs:
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
 
       - name: speed up snake animation
-        run: python3 .github/workflows/speed_up_snake.py
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const dir = 'dist';
+            for (const file of fs.readdirSync(dir)) {
+              if (!file.endsWith('.svg')) continue;
+              const p = path.join(dir, file);
+              let content = fs.readFileSync(p, 'utf8');
+              content = content.replace(/(\d+)ms/g, (_, n) => Math.max(1, Math.round(Number(n) * 0.4)) + 'ms');
+              fs.writeFileSync(p, content);
+            }
+          "
 
       - name: push snake svg to output branch
         uses: crazy-max/ghaction-github-pages@v4
