@@ -13,8 +13,8 @@ Computer Science undergraduate at Walchand College of Engineering.
 
 ## About Me
 
-I'm a Computer Science undergraduate at Walchand College of Engineering, currently working as a Research & Development Intern on AgenticEval, a six-agent AI system that grades handwritten answer sheets in under a minute — down from the ten it used to take a very patient human. The pipeline is explainable and confidence-scored, with a teacher review-and-approve step and audit logs thorough enough to survive a dispute over a grade.
+R&D Intern building **AgenticEval**, a six-agent AI system that grades handwritten answer sheets in under a minute. Also built a SQLite-style database engine from scratch in C++, mostly to confirm databases aren't held together by magic.
 
-Before that, I built a SQLite-style database engine from scratch in C++, complete with a tokenizer, parser, and B-Tree indexing, mostly to confirm for myself that databases are held together by competent engineering and not, as I had long suspected, magic.
+C++ · Python · Java · JavaScript · Flask · Django · LangChain · Gemini API
 
-I work primarily in C++, Python, Java, and JavaScript, with Flask, Django, LangChain, and the Gemini API for anything that needs to reason rather than just respond. I compete occasionally in competitive programming (3-star on CodeChef), presented at the OFFGRID 1.0 Hackathon as a finalist, and had AgenticEval shortlisted by MSME. Outside of that, I lead Walchand's Social Media Club and have spent a semester teaching science to a room of unimpressed sixth graders, which remains the harder audience.
+3★ CodeChef · OFFGRID 1.0 Hackathon Finalist · AgenticEval shortlisted by MSME
