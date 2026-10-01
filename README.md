@@ -13,8 +13,20 @@ Computer Science undergraduate at Walchand College of Engineering.
 
 ## About Me
 
-R&D Intern building **AgenticEval**, a six-agent AI system that grades handwritten answer sheets in under a minute. Also built a SQLite-style database engine from scratch in C++, mostly to confirm databases aren't held together by magic.
+**Experience**
+Research & Development Intern at Walchand College of Engineering, building AgenticEval — a six-agent AI system that auto-grades handwritten answer sheets, cutting evaluation time from ~10 minutes to under a minute. Designed explainable, confidence-scored grading with a teacher review-and-approve workflow and full audit trails. Sole engineer on the project, from architecture to deployment; currently migrating orchestration to LangChain to cut latency by ~60%.
 
-C++ · Python · Java · JavaScript · Flask · Django · LangChain · Gemini API
+**Projects**
+SQL Database Engine — a SQLite-style database engine built from scratch in C++, with a tokenizer, parser, and B-Tree indexing, reliably executing 1,000+ test queries.
 
-3★ CodeChef · OFFGRID 1.0 Hackathon Finalist · AgenticEval shortlisted by MSME
+**Achievements**
+3-star on CodeChef, finalist at the OFFGRID 1.0 Hackathon, and AgenticEval was shortlisted by MSME.
+
+**Leadership**
+General Secretary of the Social Media Club at WCE (~30 members), organized WLUG's Linux Diary for ~400 students, and taught science to 30+ students in grades 6–8 for a semester.
+
+**Education**
+B.Tech in Computer Science and Engineering, Walchand College of Engineering (2024 – 2028).
+
+**Skills**
+C++, C, Python, Java, JavaScript · Flask, Django, Node.js, Express.js, LangChain, Gemini API · Git, Google Cloud, Firebase, Supabase, Scikit-learn, NumPy
