@@ -25,25 +25,16 @@ jobs:
             dist/github-contribution-grid-snake.svg
             dist/github-contribution-grid-snake-dark.svg?palette=github-dark
 
-      - name: speed up snake animation
+      - name: speed up snake and remove growth bar
         run: |
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const dir = 'dist';
-            for (const file of fs.readdirSync(dir)) {
-              if (!file.endsWith('.svg')) continue;
-              const p = path.join(dir, file);
-              let content = fs.readFileSync(p, 'utf8');
-              content = content.replace(/(\d+)ms/g, (_, n) => Math.max(1, Math.round(Number(n) * 0.4)) + 'ms');
-              fs.writeFileSync(p, content);
-            }
-          "
+          mkdir -p processed
+          cp dist/*.svg processed/
+          node .github/workflows/postprocess-snake.js
 
       - name: push snake svg to output branch
         uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: output
-          build_dir: dist
+          build_dir: processed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
