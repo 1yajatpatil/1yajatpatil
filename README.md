@@ -83,16 +83,7 @@
 
 <br/>
 
-## GitHub Stats
-
-<div align="center">
-  <img height="165" src="https://github-readme-stats.vercel.app/api?username=1yajatpatil&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00C9FF&icon_color=00C9FF&text_color=c9d1d9" />
-  <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=1yajatpatil&layout=compact&theme=tokyonight&hide_border=true&bg_color=0D1117&title_color=00C9FF&text_color=c9d1d9" />
-</div>
-
-<div align="center">
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=1yajatpatil&theme=tokyonight&hide_border=true&background=0D1117&ring=00C9FF&fire=00C9FF&currStreakLabel=00C9FF" />
-</div>
+## Trophies
 
 <div align="center">
   <img src="https://github-profile-trophy.vercel.app/?username=1yajatpatil&theme=tokyonight&no-frame=true&column=7&margin-w=8&margin-h=8" />
