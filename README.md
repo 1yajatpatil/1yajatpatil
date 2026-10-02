@@ -1,4 +1,4 @@
-$\color{#9D00FF}{\pmb{\textbf{Yajat Patil}}}$
+# Yajat Patil
 
 Computer Science undergraduate at Walchand College of Engineering.
 
