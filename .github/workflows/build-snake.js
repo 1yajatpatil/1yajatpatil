@@ -3,15 +3,16 @@
 // Platane/snk (the common off-the-shelf tool) renders a fixed-length snake;
 // it has no concept of the body growing as it eats. This script replaces it
 // with a from-scratch renderer: it fetches the real public contribution
-// calendar, walks a boustrophedon ("zigzag") path that visits every cell
-// exactly once, and grows the snake's segment count by one every time the
-// head passes a day that had real contributions.
+// calendar and walks the snake directly from one contribution day to the
+// next, in date order, growing its segment count by one at every stop.
+// Empty days are never visited — there's nothing to eat there — so the
+// snake never roams; it only ever heads for the next green dot.
 
 const USERNAME = "1yajatpatil";
 const PITCH = 16; // px between cell centers
 const CELL = 12; // px cell size
 const START_LENGTH = 4; // snake length before eating anything
-const STEP_MS = 55; // time per grid step; lower = faster
+const STEP_MS = 40; // time per grid step; lower = faster
 const HOLD_FRACTION = 0.25; // share of the loop spent on the end-of-lap "HIRE ME" reveal
 const SNAKE_COLOR = "#9D00FF";
 const MESSAGE = "HIRE ME";
@@ -79,51 +80,33 @@ function buildGrid(cells) {
   return { byCoord, cols: maxCol + 1, rows: 7 };
 }
 
-// A randomized backtracking search for a truly organic path turned out
-// unreliable on a grid this thin (53 columns by only 7 rows) — it would
-// sometimes box itself in and burn seconds of backtracking with no
-// guaranteed result, and when it did finish, Warnsdorff's heuristic still
-// leaned hard into either long vertical or long horizontal runs because
-// that's what the grid's shape rewards.
-//
-// Instead: weave in small fixed-size blocks. Within each block the snake
-// does a tight boustrophedon across every row (so it's constantly turning,
-// not a single sweep), and successive blocks alternate which row they start
-// on so consecutive blocks connect smoothly. The overall effect reads as
-// genuine weaving rather than one long mechanical sweep, and it's a plain
-// deterministic construction — always completes, instantly, every run.
-function buildPath(grid) {
-  const BLOCK_WIDTH = 18; // wider blocks = longer straight runs, fewer turns
-  const path = [];
-  let ascending = true;
-
-  for (let blockStart = 0; blockStart < grid.cols; blockStart += BLOCK_WIDTH) {
-    const blockEnd = Math.min(blockStart + BLOCK_WIDTH, grid.cols); // exclusive
-    const rowOrder = [];
-    for (let r = 0; r < grid.rows; r++) rowOrder.push(ascending ? r : grid.rows - 1 - r);
-
-    rowOrder.forEach((row, idx) => {
-      const leftToRight = idx % 2 === 0;
-      for (let i = 0; i < blockEnd - blockStart; i++) {
-        const col = leftToRight ? blockStart + i : blockEnd - 1 - i;
-        const cell = grid.byCoord.get(`${col},${row}`);
-        if (cell) path.push(cell);
-      }
-    });
-
-    ascending = !ascending; // flip so the next block picks up on the same row
+// Every cell in the calendar, in date order (column = week, row = day).
+// Used only for drawing the static background grid.
+function buildAllCells(grid) {
+  const cells = [];
+  for (let col = 0; col < grid.cols; col++) {
+    for (let row = 0; row < grid.rows; row++) {
+      const cell = grid.byCoord.get(`${col},${row}`);
+      if (cell) cells.push(cell);
+    }
   }
+  return cells;
+}
 
-  return path;
+// The snake's actual route: only days with real contributions, in date
+// order. Skipping empty days means every step is a bite, so the snake
+// heads straight for the next green dot instead of crawling the whole grid.
+function buildPath(allCells) {
+  return allCells.filter((cell) => cell.level > 0);
 }
 
 function buildSnakeSchedule(path) {
   // birthStep[i] = the path index at which segment i first becomes visible.
+  // Every path step is a contribution day now, so the snake grows by one
+  // segment at each stop.
   const birthStep = [];
   for (let i = 0; i < START_LENGTH; i++) birthStep.push(0);
-  path.forEach((cell, i) => {
-    if (cell.level > 0) birthStep.push(i);
-  });
+  path.forEach((_, i) => birthStep.push(i));
   return birthStep; // length = final snake length
 }
 
@@ -136,10 +119,10 @@ function fmt(n) {
   return Number(n.toFixed(3));
 }
 
-function renderSvg(path, birthStep, palette) {
+function renderSvg(allCells, path, birthStep, palette) {
   const totalSteps = path.length;
   const totalMs = Math.round(totalSteps * STEP_MS * (1 / (1 - HOLD_FRACTION)));
-  const gridCols = Math.max(...path.map((c) => c.col)) + 1;
+  const gridCols = Math.max(...allCells.map((c) => c.col)) + 1;
   const width = PITCH * gridCols + 4;
   const height = PITCH * 7 + 4;
 
@@ -155,14 +138,19 @@ function renderSvg(path, birthStep, palette) {
   let css = "";
   let rects = "";
 
-  // Static / eaten-cell dots.
+  // Empty-day background dots (static, never eaten).
+  allCells.forEach((cell) => {
+    if (cell.level > 0) return;
+    const x = cell.col * PITCH + 2;
+    const y = cell.row * PITCH + 2;
+    rects += `<rect x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2" fill="${palette.bg}"/>`;
+  });
+
+  // Contribution dots: lit until the snake's head reaches them, then fade
+  // to background color (eaten).
   path.forEach((cell, i) => {
     const x = cell.col * PITCH + 2;
     const y = cell.row * PITCH + 2;
-    if (cell.level === 0) {
-      rects += `<rect x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2" fill="${palette.bg}"/>`;
-      return;
-    }
     const color = palette.levels[cell.level];
     const eatenAt = fmt(pct(i, totalSteps));
     const cls = `e${i}`;
@@ -222,13 +210,20 @@ function renderSvg(path, birthStep, palette) {
 async function main() {
   const cells = await fetchContributions(USERNAME);
   const grid = buildGrid(cells);
-  const path = buildPath(grid);
+  const allCells = buildAllCells(grid);
+  const path = buildPath(allCells);
   const birthStep = buildSnakeSchedule(path);
 
   const fs = require("fs");
   fs.mkdirSync("processed", { recursive: true });
-  fs.writeFileSync("processed/github-contribution-grid-snake.svg", renderSvg(path, birthStep, PALETTES.light));
-  fs.writeFileSync("processed/github-contribution-grid-snake-dark.svg", renderSvg(path, birthStep, PALETTES.dark));
+  fs.writeFileSync(
+    "processed/github-contribution-grid-snake.svg",
+    renderSvg(allCells, path, birthStep, PALETTES.light)
+  );
+  fs.writeFileSync(
+    "processed/github-contribution-grid-snake-dark.svg",
+    renderSvg(allCells, path, birthStep, PALETTES.dark)
+  );
 
   console.log(`grid: ${grid.cols}x${grid.rows}, path steps: ${path.length}, final snake length: ${birthStep.length}`);
 }
