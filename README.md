@@ -6,7 +6,7 @@ Computer Science undergraduate at Walchand College of Engineering.
 
 <!-- Auto-regenerating snake: GitHub Action rebuilds this on a schedule from the live contribution graph -->
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake-dark.svg?v=37258187483" />
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg?v=37258187483" />
-  <img alt="snake eating contribution graph" src="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg?v=37258187483" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake-dark.svg?v=37334995480" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg?v=37334995480" />
+  <img alt="snake eating contribution graph" src="https://raw.githubusercontent.com/1yajatpatil/1yajatpatil/output/github-contribution-grid-snake.svg?v=37334995480" width="100%" />
 </picture>
